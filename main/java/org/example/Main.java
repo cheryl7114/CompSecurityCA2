@@ -40,4 +40,8 @@ public class Main {
             }
         } while (choice != 3);
     }
+
+    public void encrypt(String file) {
+
+    }
 }
