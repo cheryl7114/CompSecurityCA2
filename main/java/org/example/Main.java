@@ -1,5 +1,7 @@
 package org.example;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -26,7 +28,7 @@ public class Main {
                 if (choice == 1) {
                     System.out.println("\nEnter file path/name: ");
                     filePath = scanner.nextLine();
-                    System.out.println("encrypt");
+                    encrypt(filePath);
                 } else if (choice == 2) {
                     System.out.println("Decrypt!");
                 } else if (choice == 3) {
@@ -39,5 +41,19 @@ public class Main {
                 scanner.nextLine();
             }
         } while (choice != 3);
+    }
+
+    public static void encrypt(String filePath) {
+        try {
+            File f = new File(filePath);
+            Scanner fileReader = new Scanner(f);
+
+            System.out.println();
+            while(fileReader.hasNext()) {
+                System.out.println(fileReader.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: file not found.");
+        }
     }
 }
