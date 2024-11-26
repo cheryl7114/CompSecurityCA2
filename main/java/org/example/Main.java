@@ -26,11 +26,13 @@ public class Main {
                 scanner.nextLine();
 
                 if (choice == 1) {
-                    System.out.println("\nEnter file path/name: ");
+                    System.out.println("\nEnter file path/name to encrypt: ");
                     filePath = scanner.nextLine();
                     encrypt(filePath);
                 } else if (choice == 2) {
-                    System.out.println("Decrypt!");
+                    System.out.println("\nEnter file path/name to decrypt: ");
+                    filePath = scanner.nextLine();
+                    decrypt(filePath);
                 } else if (choice == 3) {
                     System.out.println("Bye!");
                 } else {
@@ -44,6 +46,20 @@ public class Main {
     }
 
     public static void encrypt(String filePath) {
+        try {
+            File f = new File(filePath);
+            Scanner fileReader = new Scanner(f);
+
+            System.out.println();
+            while(fileReader.hasNext()) {
+                System.out.println(fileReader.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: file not found.");
+        }
+    }
+
+    public static void decrypt(String filePath) {
         try {
             File f = new File(filePath);
             Scanner fileReader = new Scanner(f);
