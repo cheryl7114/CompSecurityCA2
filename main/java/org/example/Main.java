@@ -1,21 +1,17 @@
 package org.example;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import javax.crypto.*;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
     static final String algorithm = "AES";
+    static final String outputFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/ciphertext.txt";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -71,20 +67,40 @@ public class Main {
             Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 
-            byte[] fileContent;
-            try (FileInputStream inputStream = new FileInputStream(filePath)) {
-                fileContent = inputStream.readAllBytes();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            FileInputStream inputStream = new FileInputStream(filePath);
+            FileOutputStream outputStream = new FileOutputStream(outputFile);
 
+            byte[] buffer = new byte[64];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byte[] output = cipher.update(buffer, 0, bytesRead);
+                if (output != null) {
+                    outputStream.write(output);
+                }
+            }
+            byte[] outputBytes = cipher.doFinal();
+            if (outputBytes != null) {
+                outputStream.write(outputBytes);
+            }
+            inputStream.close();
+            outputStream.close();
+
+            System.out.println("Encrypted successfully to ciphertext.txt!");
+            String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+            System.out.println("Encryption Key (keep this safe to decrypt the file): " + encodedKey);
 
         } catch (FileNotFoundException e) {
-            System.out.println("Error: file not found.");
+            System.out.println("Error: File not found.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             System.out.println("Error: AES algorithm not available in your environment.");
         } catch (InvalidKeyException e) {
             System.out.println("Error: Invalid encryption key.");
+        } catch (IllegalBlockSizeException e) {
+            System.out.println("Error: Data size is incompatible with the encryption algorithm.");
+        } catch (IOException e) {
+            System.out.println("Error: File content unreadable.");
+        } catch (BadPaddingException e) {
+            System.out.println("Error: Invalid encryption padding.");
         }
     }
 
