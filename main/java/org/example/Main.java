@@ -1,11 +1,22 @@
 package org.example;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
+    static final String algorithm = "AES";
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         menu(scanner);
@@ -50,12 +61,30 @@ public class Main {
             File f = new File(filePath);
             Scanner fileReader = new Scanner(f);
 
-            System.out.println();
-            while(fileReader.hasNext()) {
-                System.out.println(fileReader.nextLine());
+            // generate random AES key
+            KeyGenerator keyGen = KeyGenerator.getInstance(algorithm);
+            keyGen.init(128, new SecureRandom());
+            SecretKey secretKey = keyGen.generateKey();
+            System.out.println(secretKey);
+
+            // reference: https://www.baeldung.com/java-aes-encryption-decryption#:~:text=We%20can%20do%20the%20AES,in%20the%20string%20input%20section.
+            Cipher cipher = Cipher.getInstance(algorithm);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+
+            byte[] fileContent;
+            try (FileInputStream inputStream = new FileInputStream(filePath)) {
+                fileContent = inputStream.readAllBytes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
+
         } catch (FileNotFoundException e) {
             System.out.println("Error: file not found.");
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            System.out.println("Error: AES algorithm not available in your environment.");
+        } catch (InvalidKeyException e) {
+            System.out.println("Error: Invalid encryption key.");
         }
     }
 
