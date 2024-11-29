@@ -94,7 +94,7 @@ public class Main {
             inputStream.close();
             outputStream.close();
 
-            System.out.println("Encrypted successfully to ciphertext.txt!");
+            System.out.println("Encrypted successfully! The cipher is written to ciphertext.txt - please check your file directory.");
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
             System.out.println("Encryption Key (keep this safe to decrypt the file): " + encodedKey);
 
@@ -148,7 +148,7 @@ public class Main {
             inputStream.close();
             outputStream.close();
 
-            System.out.println("Decrypted successfully to plaintext.txt!");
+            System.out.println("Encrypted successfully! The cipher is written to plaintext.txt - please check your file directory.");
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not found.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
