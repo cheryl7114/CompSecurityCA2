@@ -1,19 +1,24 @@
 package org.example;
 
 import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
-    static final String algorithm = "AES";
+    static final String algorithm = "AES/CBC/PKCS5Padding";
     static final String cipherOutputFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/ciphertext.txt";
     static final String plainOutputFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/plaintext.txt";
+    static final String keysFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/keys.txt";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -59,14 +64,19 @@ public class Main {
     public static void encrypt(String filePath) {
         try {
             // generate random AES key
-            KeyGenerator keyGen = KeyGenerator.getInstance(algorithm);
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
             keyGen.init(128, new SecureRandom());
             SecretKey secretKey = keyGen.generateKey();
+
+            byte[] iv = new byte[16];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(iv);
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
             // reference: https://www.baeldung.com/java-aes-encryption-decryption#:~:text=We%20can%20do%20the%20AES,in%20the%20string%20input%20section.
             // initialize the cipher in ENCRYPT_MODE with the generated key
             Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
 
             // used to read contents of the file
             FileInputStream inputStream = new FileInputStream(filePath);
@@ -95,9 +105,11 @@ public class Main {
             outputStream.close();
 
             System.out.println("Encrypted successfully! The cipher is written to ciphertext.txt - please check your file directory.");
+            // source: https://medium.com/@AlexanderObregon/javas-base64-getencoder-method-explained-d3c331139837
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-            System.out.println("Encryption Key (keep this safe to decrypt the file): " + encodedKey);
-
+            String encodedIV = Base64.getEncoder().encodeToString(iv);
+            saveKeyAndIV(encodedKey,encodedIV);
+            System.out.println("The key and IV parameter used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not found.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -110,6 +122,8 @@ public class Main {
             System.out.println("Error: File content unreadable.");
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
+        } catch (InvalidAlgorithmParameterException e) {
+            System.out.println("Error: Invalid IV parameter.");
         }
     }
 
@@ -162,5 +176,21 @@ public class Main {
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
         }
+    }
+
+    public static void saveKeyAndIV(String key, String iv) {
+        try (FileWriter fw = new FileWriter(keysFile, true)) {
+            // source: https://www.w3schools.com/java/java_date.asp
+            LocalDateTime dateTime = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+            String formattedDate = dateTime.format(formatter);
+
+            fw.write(formattedDate + "\n");
+            fw.write("Key: " + key + "\n");
+            fw.write("IV: " + iv + "\n\n");
+        } catch (IOException e) {
+            System.out.println("Error: Unable to write keys into file.");
+        }
+
     }
 }
