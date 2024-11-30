@@ -28,7 +28,7 @@ public class Main {
 
     public static void menu(Scanner scanner) {
         int choice = 0;
-        String filePath, secretKey;
+        String filePath, secretKey, iv;
 
         do {
             System.out.println("\nChoose an option by number: ");
@@ -48,7 +48,9 @@ public class Main {
                     filePath = scanner.next();
                     System.out.print("Enter the Base64-encoded key: ");
                     secretKey = scanner.next();
-                    decrypt(filePath, secretKey);
+                    System.out.print("Enter the Base64-encoded IV: ");
+                    iv = scanner.next();
+                    decrypt(filePath, secretKey, iv);
                 } else if (choice == 3) {
                     System.out.println("Bye!");
                 } else {
@@ -68,6 +70,7 @@ public class Main {
             keyGen.init(128, new SecureRandom());
             SecretKey secretKey = keyGen.generateKey();
 
+            // generate random IV
             byte[] iv = new byte[16];
             SecureRandom random = new SecureRandom();
             random.nextBytes(iv);
@@ -109,7 +112,7 @@ public class Main {
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
             String encodedIV = Base64.getEncoder().encodeToString(iv);
             saveKeyAndIV(encodedKey,encodedIV);
-            System.out.println("The key and IV parameter used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
+            System.out.println("The key and IV used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not found.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -123,18 +126,21 @@ public class Main {
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
         } catch (InvalidAlgorithmParameterException e) {
-            System.out.println("Error: Invalid IV parameter.");
+            System.out.println("Error: Invalid IV.");
         }
     }
 
-    public static void decrypt(String filePath, String key) {
+    public static void decrypt(String filePath, String key, String iv) {
         try {
             // Decode the Base64-encoded key
             byte[] decodedKey = Base64.getDecoder().decode(key);
             SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+            // Decode the Base64-encoded IV
+            byte[] decodedIV = Base64.getDecoder().decode(iv);
+            IvParameterSpec ivSpec = new IvParameterSpec(decodedIV);
 
             Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
 
             // used to read contents of the file
             FileInputStream inputStream = new FileInputStream(filePath);
@@ -175,6 +181,8 @@ public class Main {
             System.out.println("Error: File content unreadable.");
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
+        } catch (InvalidAlgorithmParameterException e) {
+            System.out.println("Error: Invalid IV.");
         }
     }
 
@@ -191,6 +199,5 @@ public class Main {
         } catch (IOException e) {
             System.out.println("Error: Unable to write keys into file.");
         }
-
     }
 }
