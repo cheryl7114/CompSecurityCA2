@@ -190,7 +190,7 @@ public class Main {
         String filePath;
         while (true) {
             System.out.print("Enter file path/name: ");
-            filePath = scanner.nextLine();
+            filePath = scanner.nextLine().trim();
             File file = new File(filePath);
             if (file.exists() && file.canRead()) {
                 return filePath;
@@ -200,20 +200,22 @@ public class Main {
         }
     }
 
-    // validate key and iv
     private static String getValidBase64EncodedInput(Scanner scanner, String inputType) {
         String input;
         while (true) {
             System.out.print("Enter the Base64-encoded " + inputType + ": ");
             input = scanner.next();
 
-            byte[] decodedIV = Base64.getDecoder().decode(input);
-            if (decodedIV.length == 16) { // AES block size is 16 bytes
-                return input;
-            } else {
-                System.out.println("Invalid " + inputType + " size. Ensure it is a 128-bit Base64-encoded string.");
+            try {
+                byte[] decoded = Base64.getDecoder().decode(input);
+                if (decoded.length == 16) { // AES block size is 16 bytes
+                    return input;
+                } else {
+                    System.out.println("Invalid " + inputType + " size. Ensure it is a 128-bit Base64-encoded string.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid Base64 format. Please enter a properly Base64-encoded string.");
             }
         }
     }
-
 }
