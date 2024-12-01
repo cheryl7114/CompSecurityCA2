@@ -40,16 +40,15 @@ public class Main {
                 scanner.nextLine();
 
                 if (choice == 1) {
-                    System.out.print("\nEnter file path/name to encrypt: ");
-                    filePath = scanner.next();
-                    encrypt(filePath);
+                    filePath = getValidFilePath(scanner);
+                    encrypt(filePath, scanner);
                 } else if (choice == 2) {
-                    System.out.print("\nEnter file path/name to decrypt: ");
-                    filePath = scanner.next();
-                    System.out.print("Enter the Base64-encoded key: ");
-                    secretKey = scanner.next();
-                    System.out.print("Enter the Base64-encoded IV: ");
-                    iv = scanner.next();
+                    // Validate file path
+                    filePath = getValidFilePath(scanner);
+                    // Validate secret key
+                    secretKey = getValidBase64EncodedKey(scanner);
+                    // Validate IV
+                    iv = getValidBase64EncodedIV(scanner);
                     decrypt(filePath, secretKey, iv);
                 } else if (choice == 3) {
                     System.out.println("Bye!");
@@ -63,7 +62,8 @@ public class Main {
         } while (choice != 3);
     }
 
-    public static void encrypt(String filePath) {
+    // encrypt file
+    public static void encrypt(String filePath, Scanner scanner) {
         try {
             // generate random AES key
             KeyGenerator keyGen = KeyGenerator.getInstance("AES");
@@ -111,25 +111,37 @@ public class Main {
             // source: https://medium.com/@AlexanderObregon/javas-base64-getencoder-method-explained-d3c331139837
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
             String encodedIV = Base64.getEncoder().encodeToString(iv);
-            saveKeyAndIV(encodedKey,encodedIV);
-            System.out.println("The key and IV used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: File not found.");
+            System.out.println("Key: " + encodedKey);
+            System.out.println("IV: " + encodedIV);
+            while (true) {
+                System.out.print("Do you want to save the key and IV into a file? (Y/N): ");
+                String answer = scanner.next();
+                answer = answer.substring(0,1).toUpperCase();
+
+                if (!answer.equals("Y") && !answer.equals("N")) {
+                    System.out.println("Invalid input. Try again.");
+                } else {
+                    if (answer.equals("Y")) {
+                        saveKeyAndIV(encodedKey,encodedIV);
+                        System.out.println("The key and IV used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
+                    }
+                    return;
+                }
+            }
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            System.out.println("Error: AES algorithm not available in your environment.");
-        } catch (InvalidKeyException e) {
-            System.out.println("Error: Invalid encryption key.");
+            System.out.println("Error: AES algorithm or padding scheme is not available in your environment.");
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            System.out.println("Error: Invalid key or IV.");
+        } catch (IOException e) {
+            System.out.println("Error: Unable to read/write file.");
         } catch (IllegalBlockSizeException e) {
             System.out.println("Error: Data size is incompatible with the encryption algorithm.");
-        } catch (IOException e) {
-            System.out.println("Error: File content unreadable.");
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
-        } catch (InvalidAlgorithmParameterException e) {
-            System.out.println("Error: Invalid IV.");
         }
     }
 
+    // decrypt file
     public static void decrypt(String filePath, String key, String iv) {
         try {
             // Decode the Base64-encoded key
@@ -168,24 +180,21 @@ public class Main {
             inputStream.close();
             outputStream.close();
 
-            System.out.println("Encrypted successfully! The cipher is written to plaintext.txt - please check your file directory.");
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: File not found.");
+            System.out.println("Decrypted successfully! The decrypted content is written to plaintext.txt - please check your file directory.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            System.out.println("Error: AES algorithm not available in your environment.");
-        } catch (InvalidKeyException e) {
-            System.out.println("Error: Invalid encryption key.");
+            System.out.println("Error: AES algorithm or padding scheme is not available in your environment.");
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            System.out.println("Error: Invalid key or IV.");
+        } catch (IOException e) {
+            System.out.println("Error: Unable to read/write file.");
         } catch (IllegalBlockSizeException e) {
             System.out.println("Error: Data size is incompatible with the encryption algorithm.");
-        } catch (IOException e) {
-            System.out.println("Error: File content unreadable.");
         } catch (BadPaddingException e) {
             System.out.println("Error: Invalid encryption padding.");
-        } catch (InvalidAlgorithmParameterException e) {
-            System.out.println("Error: Invalid IV.");
         }
     }
 
+    // save key and iv into keys.txt
     public static void saveKeyAndIV(String key, String iv) {
         try (FileWriter fw = new FileWriter(keysFile, true)) {
             // source: https://www.w3schools.com/java/java_date.asp
@@ -200,4 +209,53 @@ public class Main {
             System.out.println("Error: Unable to write keys into file.");
         }
     }
+
+    // file path validator
+    private static String getValidFilePath(Scanner scanner) {
+        String filePath;
+        while (true) {
+            System.out.print("Enter file path/name: ");
+            filePath = scanner.next();
+            File file = new File(filePath);
+            if (file.exists() && file.canRead()) {
+                return filePath;
+            } else {
+                System.out.println("Invalid file path or file not readable. Please try again.");
+            }
+        }
+    }
+
+    // validate key
+    private static String getValidBase64EncodedKey(Scanner scanner) {
+        String secretKey;
+        while (true) {
+            System.out.print("Enter the Base64-encoded key: ");
+            secretKey = scanner.next();
+
+            byte[] decodedKey = Base64.getDecoder().decode(secretKey);
+            if (decodedKey.length == 16) { // 128-bit AES key
+                return secretKey;
+            } else {
+                System.out.println("Invalid key size. Ensure the key is a 128-bit Base64-encoded string.");
+            }
+        }
+    }
+
+    // validate IV
+    private static String getValidBase64EncodedIV(Scanner scanner) {
+        String iv;
+        while (true) {
+            System.out.print("Enter the Base64-encoded IV: ");
+            iv = scanner.next();
+
+            byte[] decodedIV = Base64.getDecoder().decode(iv);
+            if (decodedIV.length == 16) { // AES block size is 16 bytes
+                return iv;
+            } else {
+                System.out.println("Invalid IV size. Ensure the IV is a 128-bit Base64-encoded string.");
+            }
+        }
+    }
+
+
 }
