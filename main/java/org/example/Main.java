@@ -16,9 +16,9 @@ import java.util.Scanner;
 
 public class Main {
     static final String algorithm = "AES/CBC/PKCS5Padding";
-    static final String cipherOutputFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/ciphertext.txt";
-    static final String plainOutputFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/plaintext.txt";
-    static final String keysFile = "/Users/cherylkong/Desktop/CompSecurityCA2/src/main/java/org/example/keys.txt";
+    static final String cipherOutputFile = "ciphertext.txt";
+    static final String plainOutputFile = "plaintext.txt";
+    static final String keysFile = "keys.txt";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -82,8 +82,6 @@ public class Main {
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
             processFile(cipher, filePath, cipherOutputFile);
 
-            System.out.println("Encrypted successfully! The cipher is written to ciphertext.txt - please check your file directory.");
-
             // source: https://medium.com/@AlexanderObregon/javas-base64-getencoder-method-explained-d3c331139837
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
             String encodedIV = Base64.getEncoder().encodeToString(iv);
@@ -100,7 +98,6 @@ public class Main {
                 } else {
                     if (answer.equals("Y")) {
                         saveKeyAndIV(encodedKey,encodedIV);
-                        System.out.println("The key and IV used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
                     }
                     return;
                 }
@@ -125,8 +122,6 @@ public class Main {
             Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
             processFile(cipher, filePath, plainOutputFile);
-
-            System.out.println("Decrypted successfully! The decrypted content is written to plaintext.txt - please check your file directory.");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             System.out.println("Error: Unsupported AES algorithm or padding.");
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -159,6 +154,7 @@ public class Main {
                     // write the final encrypted block to the output file
                     outputStream.write(outputBytes);
                 }
+                System.out.println("Process done successfully! The content is written to " + outputFilePath + " - please check your file directory.");
             }
         } catch (IOException e) {
             System.out.println("Error: Unable to read/write file.");
@@ -180,6 +176,7 @@ public class Main {
             fw.write(formattedDate + "\n");
             fw.write("Key: " + key + "\n");
             fw.write("IV: " + iv + "\n\n");
+            System.out.println("The key and IV used in this process are saved to keys.txt. Please make sure you have the correct combination for decryption.");
         } catch (IOException e) {
             System.out.println("Error: Unable to write keys into file.");
         }
